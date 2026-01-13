@@ -1,8 +1,13 @@
 package org.zdn.studythread.lambda;
 
-import java.util.Arrays;
+import lombok.Data;
+
+import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
+import java.util.Map;
+import java.util.TreeMap;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class lambdaDemo {
@@ -53,5 +58,65 @@ public class lambdaDemo {
                     return n * 2;
                 })
                 .toList();
+        List<Transaction> transactions = new ArrayList<>();
+        transactions.add(new Transaction(new BigDecimal(10000), "CNY"));
+        transactions.add(new Transaction(new BigDecimal(20000), "CNY"));
+        transactions.add(new Transaction(new BigDecimal(30000), "CNY"));
+        transactions.add(new Transaction(new BigDecimal(10000), "dollar"));
+        transactions.add(new Transaction(new BigDecimal(20000), "dollar"));
+        transactions.add(new Transaction(new BigDecimal(30000), "ZZZ"));
+        transactions.add(new Transaction(new BigDecimal(20000), "ZZZ"));
+        transactions.add(new Transaction(new BigDecimal(10000), "ZZZ"));
+
+        transactions.stream()
+                .filter(t -> t.getPrice().compareTo(BigDecimal.valueOf(10000)) > 0)
+                .collect(Collectors.groupingBy(
+                        Transaction::getCurrency,
+                        TreeMap::new,
+                        Collectors.collectingAndThen(
+                                Collectors.toList(),
+                                list -> list.stream()
+                                        .map(Transaction::toString)
+                                        .collect(Collectors.joining(",", "{", "}"))
+                        )
+                ))
+                .forEach((currency, group) -> System.out.println(currency + ":" + group));
+
+        /*Map<String, List<Transaction>> map = transactions.stream()
+                .filter(t -> t.getPrice().intValue() > 10000)
+                .collect(Collectors.groupingBy(Transaction::getCurrency));
+
+        map.forEach((a, b) -> {
+            StringBuilder stringBuilder = new StringBuilder(a);
+            stringBuilder.append(":{");
+            b.forEach(t -> {
+                stringBuilder.append(t).append(",");
+            });
+            stringBuilder.deleteCharAt(stringBuilder.lastIndexOf(","));
+            stringBuilder.append("}");
+            System.out.println(stringBuilder.toString());
+        });*/
+    }
+
+    @Data
+    static
+    class Transaction {
+
+        private BigDecimal price;
+
+        private String currency;
+
+        public Transaction(BigDecimal price, String currency) {
+            this.price = price;
+            this.currency = currency;
+        }
+
+        @Override
+        public String toString() {
+            return "Transaction{" +
+                    "price=" + price +
+                    ", currency='" + currency + '\'' +
+                    '}';
+        }
     }
 }
